@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0
+asyncpg
+pydantic==2.12.5
+pydantic-settings>=2.0
+python-dotenv
+python-multipart
+requests
+pytest
+pytest-asyncio
+httpx
