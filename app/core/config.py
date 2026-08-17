@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     # CORS allowed origins (comma-separated)
     cors_origins: str = "http://localhost:5173,http://localhost:5174"
 
+    # Auth
+    jwt_secret_key: str = "dev-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    jwt_expires_minutes: int = 60 * 24  # 24h
+    auth_cookie_name: str = "dealerhub_session"
+    # False for local http dev; must be True (requires HTTPS) in staging/prod
+    auth_cookie_secure: bool = False
+
     model_config = SettingsConfigDict(
         # env_file is silently ignored when the file does not exist,
         # so this is safe inside containers where there is no .env file.

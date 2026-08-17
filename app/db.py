@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.models.base import metadata  # noqa: F401
 # Import table modules here so they register with `metadata` before
-# create_tables() runs, e.g.:
-# import app.models.dealer_table  # noqa: F401
+# create_tables() runs.
+import app.models.dealer_user_table  # noqa: F401
 
 _engine: Optional[AsyncEngine] = None
 
