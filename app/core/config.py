@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     # False for local http dev; must be True (requires HTTPS) in staging/prod
     auth_cookie_secure: bool = False
 
+    # Base URL of the dealer-ui frontend, used to build the public
+    # scan-landing link encoded in QR codes: {frontend_public_base_url}/d/{dealer_id}
+    frontend_public_base_url: str = "http://localhost:5173"
+
+    # Base URL of the atoloan-backend service, source of truth for bank/
+    # credit-union data (GET {atoloan_backend_base_url}/credit-unions)
+    atoloan_backend_base_url: str = "http://localhost:8001"
+
     model_config = SettingsConfigDict(
         # env_file is silently ignored when the file does not exist,
         # so this is safe inside containers where there is no .env file.

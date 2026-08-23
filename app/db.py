@@ -10,6 +10,8 @@ from app.models.base import metadata  # noqa: F401
 # Import table modules here so they register with `metadata` before
 # create_tables() runs.
 import app.models.dealer_user_table  # noqa: F401
+import app.models.qr_code_table  # noqa: F401
+import app.models.bank_dealer_table  # noqa: F401
 
 _engine: Optional[AsyncEngine] = None
 
