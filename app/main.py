@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.db import create_tables, test_connection
+from app.api.routers.applications import router as applications_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.banks import router as banks_router
 from app.api.routers.health import router as health_router
@@ -54,3 +55,4 @@ app.include_router(banks_router)
 app.include_router(rate_sheets_router)
 app.include_router(internal_router)
 app.include_router(soft_pull_router)
+app.include_router(applications_router)

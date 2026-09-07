@@ -9,6 +9,7 @@ import logging
 
 import httpx
 from sqlalchemy import delete, insert, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from app.core.config import get_settings
@@ -96,3 +97,19 @@ async def save_dealer_banks(
         )
 
     return [BankOut(id=bank_id, name=available[bank_id]) for bank_id in unique_ids]
+
+
+async def add_dealer_bank(conn: AsyncConnection, dealer_id: str, bank_id: int, bank_name: str) -> None:
+    """
+    Add a single bank to the dealer's network without touching the rest of
+    their selection — unlike save_dealer_banks, which replaces the whole
+    set. Used when a dealer approves a freshly-parsed rate sheet.
+    """
+    stmt = pg_insert(bank_dealer_table).values(
+        dealer_id=dealer_id, bank_id=bank_id, bank_name=bank_name
+    )
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[bank_dealer_table.c.dealer_id, bank_dealer_table.c.bank_id],
+        set_={"bank_name": bank_name},
+    )
+    await conn.execute(stmt)
