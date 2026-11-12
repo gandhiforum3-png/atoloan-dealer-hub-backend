@@ -38,6 +38,7 @@ async def get_public_dealer_info(
             .where(
                 dealer_user_table.c.dealer_id == dealer_id,
                 qr_code_table.c.token == code,
+                dealer_user_table.c.is_active.is_(True),  # deactivated dealer → their printed codes stop working
             )
         )
     ).mappings().first()

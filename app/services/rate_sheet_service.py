@@ -2,7 +2,7 @@
 Client for atoloan-backend's rate sheet PDF-parsing pipeline.
 
 Dealer-hub-backend has no PDF/OCR/LLM parsing of its own — atoloan-backend
-already owns that pipeline (pdfplumber/camelot + LLM extraction), so we
+already owns that pipeline (PDF sent to Claude for structured extraction), so we
 forward the upload to it rather than duplicating those dependencies here.
 This only parses and previews; nothing is persisted to the bank database.
 """
@@ -28,6 +28,7 @@ async def parse_rate_sheet(filename: str, content: bytes, content_type: str | No
             response = await client.post(
                 url,
                 files={"file": (filename, content, content_type or "application/pdf")},
+                headers=settings.service_headers,
             )
             response.raise_for_status()
     except httpx.HTTPError as exc:
@@ -43,7 +44,6 @@ async def parse_rate_sheet(filename: str, content: bytes, content_type: str | No
     return {
         "filename": result.get("filename", filename),
         "parse_error": result.get("parse_error"),
-        "validation": result.get("validation"),
         "rate_sheet": result.get("rate_sheet"),
     }
 
@@ -59,7 +59,7 @@ async def save_rate_sheet(rate_sheet: dict) -> dict:
     url = f"{settings.atoloan_backend_base_url.rstrip('/')}/update"
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(url, json=rate_sheet)
+            response = await client.post(url, json=rate_sheet, headers=settings.service_headers)
             response.raise_for_status()
     except httpx.HTTPError as exc:
         logger.exception("atoloan-backend rate sheet save failed")

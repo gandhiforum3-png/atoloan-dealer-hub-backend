@@ -6,7 +6,11 @@ Usage:
         --email manager@westsideauto.com \
         --password "correct horse battery staple" \
         --name "Andrew Miller" \
-        --dealership "Westside Auto Group"
+        --dealership "Westside Auto Group" \
+        [--admin]
+
+The first admin is created this way; further dealers are onboarded from
+/admin/dealers in the portal.
 """
 import argparse
 import asyncio
@@ -18,7 +22,7 @@ from app.models.dealer_user_table import dealer_user_table, next_dealer_id
 from app.services.auth_service import hash_password
 
 
-async def create_dealer_user(email: str, password: str, name: str, dealership: str) -> None:
+async def create_dealer_user(email: str, password: str, name: str, dealership: str, is_admin: bool) -> None:
     engine = get_engine()
     async with engine.begin() as conn:
         dealer_id = await next_dealer_id(conn)
@@ -29,9 +33,10 @@ async def create_dealer_user(email: str, password: str, name: str, dealership: s
                 password_hash=hash_password(password),
                 name=name,
                 dealership_name=dealership,
+                is_admin=is_admin,
             )
         )
-    print(f"Created dealer user: {dealer_id} ({email})")
+    print(f"Created {'admin' if is_admin else 'dealer'} user: {dealer_id} ({email})")
 
 
 def main() -> None:
@@ -40,9 +45,10 @@ def main() -> None:
     parser.add_argument("--password", required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--dealership", required=True)
+    parser.add_argument("--admin", action="store_true", help="grant access to /admin/dealers")
     args = parser.parse_args()
 
-    asyncio.run(create_dealer_user(args.email, args.password, args.name, args.dealership))
+    asyncio.run(create_dealer_user(args.email, args.password, args.name, args.dealership, args.admin))
 
 
 if __name__ == "__main__":

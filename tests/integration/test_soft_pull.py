@@ -25,7 +25,7 @@ async def test_submit_injects_authenticated_dealer_id(client, logged_in_dealer, 
 
     response = await client.post(
         "/soft-pull",
-        json={"contactInfo": {"firstName": "John"}, "dealer_id": "someone-elses-id"},
+        json={"contactInfo": {"firstName": "John"}, "dealer_id": "someone-elses-id", "consent": True},
     )
 
     assert response.status_code == 200
@@ -40,7 +40,7 @@ async def test_submit_forwards_validation_error(client, logged_in_dealer, monkey
 
     monkeypatch.setattr("app.api.routers.soft_pull.run_soft_pull", fake_run_soft_pull)
 
-    response = await client.post("/soft-pull", json={})
+    response = await client.post("/soft-pull", json={"consent": True})
     assert response.status_code == 400
     assert response.json()["detail"] == "missing required fields: email"
 
@@ -52,5 +52,31 @@ async def test_submit_returns_502_when_service_unavailable(client, logged_in_dea
 
     monkeypatch.setattr("app.api.routers.soft_pull.run_soft_pull", failing_run_soft_pull)
 
-    response = await client.post("/soft-pull", json={})
+    response = await client.post("/soft-pull", json={"consent": True})
     assert response.status_code == 502
+
+
+@pytest.mark.asyncio
+async def test_submit_without_consent_never_reaches_backend(client, logged_in_dealer, monkeypatch):
+    called = []
+
+    async def fake_run_soft_pull(payload):
+        called.append(payload)
+        return 200, {}
+
+    monkeypatch.setattr("app.api.routers.soft_pull.run_soft_pull", fake_run_soft_pull)
+
+    response = await client.post("/soft-pull", json={"contactInfo": {"firstName": "John"}})
+    assert response.status_code == 400
+    assert called == []
+
+
+@pytest.mark.asyncio
+async def test_cross_origin_write_is_blocked(client, logged_in_dealer):
+    """CSRF: a page on another origin (even a sibling subdomain) can't drive the session."""
+    response = await client.post(
+        "/soft-pull",
+        content='{"consent": true}',
+        headers={"Origin": "https://evil.atoloans.com", "Content-Type": "text/plain"},
+    )
+    assert response.status_code == 403

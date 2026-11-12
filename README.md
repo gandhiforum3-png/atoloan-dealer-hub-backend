@@ -40,11 +40,11 @@ cp .env.example .env
 # 4. Start Postgres (via Docker) or point PGHOST/PGPORT at an existing instance
 docker compose up -d db
 
-# 5. Run the server
-uvicorn app.main:app --reload
+# 5. Run the server (8001 — atoloan-backend owns 8000, see ../dev.sh)
+uvicorn app.main:app --reload --port 8001
 ```
 
-Visit `http://localhost:8000/hello` and `http://localhost:8000/db-check` to confirm the app and DB connection are working.
+Visit `http://localhost:8001/hello` and `http://localhost:8001/db-check` to confirm the app and DB connection are working.
 
 ## Running Tests
 
@@ -66,3 +66,26 @@ This starts both the Postgres database and the API container. The API reads conf
 2. Import the new table module in `app/db.py` so it registers before `create_tables()` runs.
 3. Add business logic in `app/services/`.
 4. Add a router in `app/api/routers/<name>.py` and register it in `app/main.py`.
+
+## Admin accounts
+
+Admins are dealer accounts with `is_admin = true`. In the portal they get an
+**Atoloan Admin** section:
+
+- **Lender Approvals** (`/admin/lenders`): rate sheets dealers submit for new lenders
+  are `pending` and never offered to customers until an admin approves them. Admins can
+  approve, reject (pending only — removes the lender), or unpublish an approved lender.
+- **Dealers** (`/admin/dealers`): onboard dealerships (a one-time password is generated;
+  the dealer must change it at first sign-in), edit, deactivate/reactivate, reset
+  passwords, and grant or remove admin access. Admins can't deactivate or demote themselves.
+- **All Applications** (`/admin/applications`): every application across dealers and the
+  customer site, filterable by dealership.
+
+Every admin action is written to the `admin_audit_log` table (actor, action, target).
+
+Create the first admin from the CLI; after that, admins can promote others in the portal:
+
+```bash
+python -m scripts.create_dealer_user --email you@atoloans.com --password '<12+ chars>' \
+    --name "Your Name" --dealership "Atoloan HQ" --admin
+```

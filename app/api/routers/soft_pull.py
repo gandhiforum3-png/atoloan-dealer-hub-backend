@@ -29,6 +29,10 @@ async def submit_soft_pull(
     # client payload — otherwise a dealer could pass another dealer_id and
     # search that dealer's bank network instead of their own.
     payload["dealer_id"] = current_user.dealer_id
+    # FCRA: the dealer certifies the applicant's consent; atoloan-backend
+    # refuses the pull without it and records when it was given.
+    if payload.get("consent") is not True:
+        raise HTTPException(status_code=400, detail="applicant consent is required")
 
     try:
         status_code, body = await run_soft_pull(payload)

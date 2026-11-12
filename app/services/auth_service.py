@@ -1,6 +1,7 @@
 """
 Password hashing and JWT session-token helpers.
 """
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -21,10 +22,17 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
-def create_access_token(dealer_id: str) -> str:
+def password_version(password_hash: str) -> str:
+    """Short fingerprint of the stored hash. Changes whenever the password does,
+    so every session issued before a password change/reset stops validating."""
+    return hashlib.sha256(password_hash.encode("utf-8")).hexdigest()[:16]
+
+
+def create_access_token(dealer_id: str, password_hash: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": dealer_id,
+        "pwv": password_version(password_hash),
         "iat": now,
         "exp": now + timedelta(minutes=settings.jwt_expires_minutes),
     }
@@ -32,4 +40,9 @@ def create_access_token(dealer_id: str) -> str:
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    return jwt.decode(
+        token,
+        settings.jwt_secret_key,
+        algorithms=[settings.jwt_algorithm],
+        options={"require": ["sub", "exp", "pwv"]},
+    )

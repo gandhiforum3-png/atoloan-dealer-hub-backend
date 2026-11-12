@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from sqlalchemy import text
-from sqlalchemy.engine import URL
+from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.models.base import metadata  # noqa: F401
@@ -12,6 +12,7 @@ from app.models.base import metadata  # noqa: F401
 import app.models.dealer_user_table  # noqa: F401
 import app.models.qr_code_table  # noqa: F401
 import app.models.bank_dealer_table  # noqa: F401
+import app.models.lender_submission_table  # noqa: F401
 
 _engine: Optional[AsyncEngine] = None
 
@@ -25,7 +26,7 @@ def get_database_url(
 ) -> URL:
     raw = os.getenv("DATABASE_URL", "").strip()
     if raw:
-        return URL.create(raw) if isinstance(raw, str) else raw
+        return make_url(raw)  # URL.create(raw) would treat the whole URL as a driver name
 
     resolved_host = host or os.getenv("PGHOST", "localhost")
     resolved_port = port or os.getenv("PGPORT", "5432")
@@ -68,3 +69,5 @@ async def create_tables() -> None:
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(metadata.create_all)
+        for stmt in app.models.dealer_user_table.DEALER_USER_COLUMN_MIGRATIONS:
+            await conn.execute(text(stmt))

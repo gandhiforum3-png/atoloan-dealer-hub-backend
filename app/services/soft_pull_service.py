@@ -21,7 +21,7 @@ async def run_soft_pull(payload: dict) -> tuple[int, dict]:
     url = f"{settings.atoloan_backend_base_url.rstrip('/')}/findback"
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(url, json=payload)
+            response = await client.post(url, json=payload, headers=settings.service_headers)
     except httpx.HTTPError as exc:
         logger.exception("atoloan-backend soft pull request failed")
         raise SoftPullUnavailableError(str(exc)) from exc

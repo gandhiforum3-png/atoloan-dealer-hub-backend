@@ -35,7 +35,7 @@ async def list_banks() -> list[BankOut]:
     url = f"{settings.atoloan_backend_base_url.rstrip('/')}/credit-unions"
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(url)
+            response = await client.get(url, headers=settings.service_headers)
             response.raise_for_status()
     except httpx.HTTPError as exc:
         logger.exception("atoloan-backend bank lookup failed")

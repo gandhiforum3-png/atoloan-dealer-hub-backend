@@ -1,8 +1,6 @@
 """
-Server-to-server endpoints for other atoloan services — not reachable by
-end users, no bank/rate data of its own to protect (mirrors the trust
-model atoloan-backend already uses for its own unauthenticated
-/credit-unions endpoint).
+Server-to-server endpoints for other atoloan services. Callers must send the
+shared X-Service-Token; no dealer login.
 """
 import logging
 
@@ -10,11 +8,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from app.core.dependencies import get_conn
+from app.core.security import require_service_token
 from app.services.bank_network_service import get_dealer_bank_ids
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/internal", tags=["internal"])
+router = APIRouter(prefix="/internal", tags=["internal"], dependencies=[Depends(require_service_token)])
 
 
 @router.get("/dealers/{dealer_id}/bank-ids")

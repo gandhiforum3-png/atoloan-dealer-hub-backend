@@ -55,3 +55,22 @@ async def test_update_label_keeps_same_token(client, logged_in_dealer):
 async def test_scan_unknown_dealer_returns_404(client):
     response = await client.get("/public/dealers/DLR-999999", params={"code": "bogus"})
     assert response.status_code == 404
+
+
+async def test_scan_of_deactivated_dealer_returns_404(client, logged_in_dealer):
+    from sqlalchemy import update
+
+    from app.db import get_engine
+    from app.models.dealer_user_table import dealer_user_table
+
+    token = (await client.post("/qr-codes", json={"label": "Front desk"})).json()["token"]
+    url, params = f"/public/dealers/{logged_in_dealer['dealer_id']}", {"code": token}
+    assert (await client.get(url, params=params)).status_code == 200
+
+    async with get_engine().begin() as conn:
+        await conn.execute(
+            update(dealer_user_table)
+            .where(dealer_user_table.c.dealer_id == logged_in_dealer["dealer_id"])
+            .values(is_active=False)
+        )
+    assert (await client.get(url, params=params)).status_code == 404

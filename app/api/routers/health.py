@@ -3,7 +3,7 @@ Health-check and utility endpoints.
 """
 import logging
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 
 from app.db import test_connection
 
@@ -26,9 +26,3 @@ async def db_check() -> dict:
         raise HTTPException(status_code=500, detail="database connection failed") from exc
     return {"status": "ok"}
 
-
-@router.post("/echo")
-async def echo(request: Request) -> dict:
-    payload = await request.json()
-    logger.info("echo payload: %s", payload)
-    return {"received": payload}

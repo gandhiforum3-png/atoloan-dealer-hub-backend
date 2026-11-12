@@ -69,3 +69,40 @@ async def test_login_then_me_returns_same_user(client, dealer_user):
     me_response = await client.get("/auth/me")
     assert me_response.status_code == 200
     assert me_response.json()["email"] == dealer_user["email"]
+
+
+@pytest.mark.asyncio
+async def test_password_change_revokes_existing_sessions(client, dealer_user):
+    await client.post("/auth/login", json={"email": dealer_user["email"], "password": dealer_user["password"]})
+    assert (await client.get("/auth/me")).status_code == 200
+
+    async with get_engine().begin() as conn:
+        await conn.execute(
+            dealer_user_table.update()
+            .where(dealer_user_table.c.dealer_id == dealer_user["dealer_id"])
+            .values(password_hash=hash_password("a-brand-new-password"))
+        )
+
+    assert (await client.get("/auth/me")).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_repeated_failed_logins_are_throttled(client, dealer_user):
+    from app.core.security import login_throttle
+
+    bad = {"email": dealer_user["email"], "password": "wrong"}
+    try:
+        for _ in range(login_throttle.MAX_FAILURES):
+            assert (await client.post("/auth/login", json=bad)).status_code == 401
+        # Locked even with the right password until the window passes
+        good = {"email": dealer_user["email"], "password": dealer_user["password"]}
+        assert (await client.post("/auth/login", json=good)).status_code == 429
+    finally:
+        login_throttle._failures.clear()
+
+
+@pytest.mark.asyncio
+async def test_unknown_email_returns_same_401(client):
+    response = await client.post("/auth/login", json={"email": "nobody@example.com", "password": "x"})
+    assert response.status_code == 401
+    assert response.json()["detail"] == "invalid email or password"

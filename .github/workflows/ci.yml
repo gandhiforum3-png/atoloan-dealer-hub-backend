@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: dealerhub_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: ci
+      PGDATABASE: dealerhub_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans the whole history
+      - name: Dependency CVEs
+        run: pipx run pip-audit -r requirements.txt
+      - name: SAST + secrets patterns
+        run: pipx run semgrep scan --config p/default --config p/secrets --error --metrics off
+      - name: Secrets in git history
+        run: docker run --rm -v "$PWD":/repo ghcr.io/gitleaks/gitleaks:v8.21.2 git /repo --no-banner --redact
+      - name: Build image
+        run: docker build -t dealer-hub-api:ci .
+      - name: Image CVEs
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: dealer-hub-api:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"

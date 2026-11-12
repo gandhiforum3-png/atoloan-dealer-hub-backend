@@ -1,16 +1,17 @@
-fastapi
-uvicorn[standard]
-sqlalchemy>=2.0
-asyncpg
+# Pinned to tested versions — bump deliberately and run `pip-audit -r requirements.txt`
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+sqlalchemy==2.0.52
+asyncpg==0.31.0
 pydantic==2.12.5
-email-validator>=2.0
-pydantic-settings>=2.0
-python-dotenv
-python-multipart
-requests
-bcrypt>=4.0
-pyjwt>=2.8
-qrcode[pil]>=7.4
-pytest
-pytest-asyncio
-httpx
+email-validator==2.3.0
+pydantic-settings==2.15.0
+python-multipart==0.0.32
+bcrypt==5.0.0
+pyjwt==2.15.0
+qrcode[pil]==8.2
+pytest==9.1.1
+pytest-asyncio==1.4.0
+httpx==0.28.1
+# transitive (requests/boto3/httpx) — pinned past PYSEC-2026-4175..4177
+urllib3==2.8.0

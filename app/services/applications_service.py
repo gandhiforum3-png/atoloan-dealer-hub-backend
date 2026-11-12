@@ -1,29 +1,30 @@
 """
-Client for atoloan-backend's read-only loan application listing.
+Client for atoloan-backend's read-only loan application listings.
 """
-import logging
+from app.services.backend_client import BackendUnavailableError, backend_request
 
-import httpx
-
-from app.core.config import get_settings
-
-logger = logging.getLogger(__name__)
-
-settings = get_settings()
+# Kept for existing callers/tests
+ApplicationsUnavailableError = BackendUnavailableError
 
 
-class ApplicationsUnavailableError(Exception):
-    pass
+async def list_applications(dealer_id: str, limit: int = 50, offset: int = 0) -> dict:
+    return await backend_request(
+        "GET", f"/dealers/{dealer_id}/loan-applications", params={"limit": limit, "offset": offset}
+    )
 
 
-async def list_applications(dealer_id: str) -> list[dict]:
-    url = f"{settings.atoloan_backend_base_url.rstrip('/')}/dealers/{dealer_id}/loan-applications"
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-    except httpx.HTTPError as exc:
-        logger.exception("atoloan-backend applications lookup failed")
-        raise ApplicationsUnavailableError(str(exc)) from exc
+async def applications_summary(dealer_id: str) -> dict:
+    return await backend_request("GET", f"/dealers/{dealer_id}/loan-applications/summary")
 
-    return response.json().get("applications", [])
+
+def _admin_filters(dealer_id: str | None, q: str | None) -> dict:
+    return {k: v for k, v in (("dealer_id", dealer_id), ("q", q)) if v}
+
+
+async def list_all_applications(dealer_id: str | None, limit: int, offset: int, q: str | None = None) -> dict:
+    params = {"limit": limit, "offset": offset, **_admin_filters(dealer_id, q)}
+    return await backend_request("GET", "/loan-applications", params=params)
+
+
+async def all_applications_summary(dealer_id: str | None, q: str | None = None) -> dict:
+    return await backend_request("GET", "/loan-applications/summary", params=_admin_filters(dealer_id, q) or None)
