@@ -11,7 +11,7 @@ bcrypt==5.0.0
 pyjwt==2.15.0
 qrcode[pil]==8.2
 pytest==9.1.1
-pytest-asyncio==1.4.0
+pytest-asyncio==1.5.0
 httpx==0.28.1
 # transitive (requests/boto3/httpx) — pinned past PYSEC-2026-4175..4177
 urllib3==2.8.0
