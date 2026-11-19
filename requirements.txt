@@ -1,5 +1,5 @@
 # Pinned to tested versions — bump deliberately and run `pip-audit -r requirements.txt`
-fastapi==0.141.1
+fastapi==0.163.1
 uvicorn[standard]==0.52.4
 sqlalchemy==2.0.52
 asyncpg==0.31.0
