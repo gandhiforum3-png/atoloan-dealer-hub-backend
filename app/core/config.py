@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     # Base URL of the atoloan-backend service, source of truth for bank/
     # credit-union data (GET {atoloan_backend_base_url}/credit-unions)
-    atoloan_backend_base_url: str = "http://localhost:8000"
+    atoloan_backend_base_url: str = "http://localhost:8001"
 
     model_config = SettingsConfigDict(
         # env_file is silently ignored when the file does not exist,

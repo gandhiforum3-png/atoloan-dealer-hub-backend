@@ -13,6 +13,11 @@ import app.models.dealer_user_table  # noqa: F401
 import app.models.qr_code_table  # noqa: F401
 import app.models.bank_dealer_table  # noqa: F401
 import app.models.lender_submission_table  # noqa: F401
+import app.models.payment_method_table  # noqa: F401
+import app.models.dealer_billing_table  # noqa: F401
+import app.models.setup_intent_table  # noqa: F401
+import app.models.subscription_table  # noqa: F401
+import app.models.payment_table  # noqa: F401
 
 _engine: Optional[AsyncEngine] = None
 

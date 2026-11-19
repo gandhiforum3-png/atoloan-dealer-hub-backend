@@ -15,6 +15,7 @@ from app.api.routers.admin import router as admin_router
 from app.api.routers.admin_customers import router as admin_customers_router
 from app.api.routers.applications import router as applications_router
 from app.api.routers.auth import router as auth_router
+from app.api.routers.billing import router as billing_router
 from app.api.routers.banks import router as banks_router
 from app.api.routers.dealer_admin import router as dealer_admin_router
 from app.api.routers.health import router as health_router
@@ -54,7 +55,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type"],
 )
 
@@ -85,3 +86,4 @@ app.include_router(applications_router)
 app.include_router(dealer_admin_router)
 app.include_router(admin_router)
 app.include_router(admin_customers_router)
+app.include_router(billing_router)
