@@ -54,7 +54,7 @@ jobs:
       - name: Build image
         run: docker build -t dealer-hub-api:ci .
       - name: Image CVEs
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: dealer-hub-api:ci
           severity: CRITICAL,HIGH
